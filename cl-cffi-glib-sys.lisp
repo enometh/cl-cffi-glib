@@ -41,11 +41,55 @@
 
 ;;; ----------------------------------------------------------------------------
 
+#+mk-defsystem
+(defun mk::search-for-component (system &optional (name system))
+  (setq system (mk::find-system system :error))
+  (block nil
+    (or (mk::%mk-traverse
+	 system
+	 (labels ((rec (component)
+		    (unless (find (mk::component-type component)
+				  '(:defsystem :system :subsystem))
+		      (if (equal (mk::canonicalize-system-name
+				  (mk::component-name  component))
+				 (mk::canonicalize-system-name name))
+			  (return component)))))
+	   #'rec)
+	 nil
+	 :never)
+	system)))
+
+#+mk-defsystem
+(defun mk::component-source-dir (c)
+  (if (find (mk::component-type c) '(:defsystem))
+      (mk::component-source-root-dir c)
+      (let ((f (mk::component-full-pathname c :source)))
+	(if (find (mk::component-type c) '(:system :subsystem :module))
+	    f
+	    (directory-namestring f)))))
+#||
+(get-current-package)
+(mk::component-source-dir (mk::search-for-component (get-current-package)))
+(mk::component-source-pathname (mk::search-for-component (get-current-package)))
+(mk::component-full-pathname  (mk::search-for-component (get-current-package))
+			      :source)
+(sys-path "foo" "cl-cffi-glib")
+||#
+
 (let ((current-package nil))
 
   ;; Get pathname for FILENAME in PACKAGE
   (defun sys-path (filename &optional (package current-package))
-    (asdf:system-relative-pathname package filename))
+    #+(and asdf (not mk-defsystem))
+    (asdf:system-relative-pathname package filename)
+    #+mk-defsystem
+    (progn
+      (assert (mk::find-system package :load-or-nil))
+      (let* ((c (mk::search-for-component package))
+	     (d (mk::component-source-dir c))
+	     (r (merge-pathnames (or filename "") d)))
+	#+sbcl (sb-ext:native-namestring r)
+	#-sbcl r)))
 
   (defun get-current-package ()
     current-package)
@@ -58,8 +102,8 @@
   (defun check-and-create-resources (resource &key (package current-package)
                                                    (sourcedir nil)
                                                    (verbose nil))
-    (let* ((source (sys-path resource package))
-           (sourcedir (directory-namestring (sys-path sourcedir package)))
+    (let* ((source (truename (sys-path resource package)))
+           (sourcedir (directory-namestring (truename (sys-path sourcedir package))))
            (name1 (pathname-name resource))
            (name (if (string= "gresource" (pathname-type name1))
                      (pathname-name name1)
@@ -82,8 +126,11 @@
         (uiop:run-program (list "glib-compile-resources"
                                 "--sourcedir"
                                 sourcedir
-                                (namestring source))))
-      target))
+                                (namestring source))
+			  :output t
+			  :error-output :output
+			  ))
+      (truename target)))
 )
 
 ;;; ----------------------------------------------------------------------------
