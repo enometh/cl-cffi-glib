@@ -39,7 +39,10 @@
   (setf (glib:prgname) "glib-test")
   ;; Ensure directory for the output of test results
   (ensure-directories-exist
-      (asdf:system-relative-pathname :cl-cffi-glib "test/out/")))
+      (#+(and asdf (not mk-defsystem))
+       asdf:system-relative-pathname
+       #+mk-defsystem
+       mk::system-relative-pathname :cl-cffi-glib "test/out/")))
 
 (def-suite glib-test)
 (def-suite glib-suite :in glib-test)
