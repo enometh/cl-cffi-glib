@@ -1,0 +1,198 @@
+;;; -*- Mode: LISP; Package: :cl-user; BASE: 10; Syntax: ANSI-Common-Lisp; -*-
+;;;
+;;;   Time-stamp: <>
+;;;   Touched: Mon May 12 09:14:51 2025 +0530 <enometh@net.meer>
+;;;   Bugs-To: enometh@net.meer
+;;;   Status: Experimental.  Do not redistribute
+;;;   Copyright (C) 2025 Madhu.  All Rights Reserved.
+;;;
+(in-package "CL-USER")
+
+(defvar *cl-cffi-glib-source-dir*
+  (merge-pathnames "Github/cl-cffi-glib/" (translate-logical-pathname "EXTERN:")))
+(defvar *cl-cffi-glib-binary-dir* (binary-directory *cl-cffi-glib-source-dir*))
+
+
+(mk:defsystem :cl-cffi-glib/test
+  :source-pathname *cl-cffi-glib-source-dir*
+  :binary-pathname *cl-cffi-glib-binary-dir*
+  :source-extension "lisp"
+  :depends-on (:cl-cffi-glib
+	       :local-time
+	       :fiveam)
+  :components ((:module test
+		:components (:SERIAL
+			     (:file "rtest-glib")
+			     (:file "rtest-glib-stable-pointer")
+			     (:file "rtest-glib-gtype")
+			     (:file "rtest-glib-boxed-type")
+			     (:file "rtest-glib-version")
+			     (:file "rtest-glib-misc")
+			     (:file "rtest-glib-error")
+			     (:file "rtest-glib-main-loop")
+			     (:file "rtest-glib-bytes")
+			     (:file "rtest-glib-option")
+			     (:file "rtest-glib-key-file")
+			     (:file "rtest-glib-variant-type")
+			     (:file "rtest-glib-variant")
+			     (:file "rtest-gobject-type-info")
+			     (:file "rtest-gobject-gvalue")
+			     (:file "rtest-gobject-enumeration")
+			     (:file "rtest-gobject-boxed-lisp")
+			     (:file "rtest-gobject-param-spec")
+			     (:file "rtest-gobject-param")
+			     (:file "rtest-gobject-gobject-class")
+			     (:file "rtest-gobject-base")
+			     (:file "rtest-gobject-signals")
+			     (:file "rtest-gobject-binding")
+			     (:file "rtest-gobject-utils")
+			     (:file "rtest-gobject-generating")
+			     (:file "rtest-gobject-subclassing")
+			     (:file "rtest-gio-content-type")
+			     (:file "rtest-gio-app-info")
+			     (:file "rtest-gio-icon")
+			     (:file "rtest-gio-loadable-icon")
+			     (:file "rtest-gio-file-icon")
+			     (:file "rtest-gio-themed-icon")
+			     (:file "rtest-gio-emblemed-icon")
+			     (:file "rtest-gio-emblem")
+			     (:file "rtest-gio-resource")
+			     (:file "rtest-gio-permission")
+			     (:file "rtest-gio-simple-permission")
+			     (:file "rtest-gio-list-model")
+			     (:file "rtest-gio-list-store")
+			     (:file "rtest-gio-action")
+			     (:file "rtest-gio-action-group")
+			     (:file "rtest-gio-action-map")
+			     (:file "rtest-gio-simple-action")
+			     (:file "rtest-gio-property-action")
+			     (:file "rtest-gio-simple-action-group")
+			     (:file "rtest-gio-application")
+			     (:file "rtest-gio-application-command-line")
+			     (:file "rtest-gio-menu-model")
+			     (:file "rtest-gio-menu")
+			     (:file "rtest-gio-notification")
+			     (:file "rtest-gio-file")
+			     (:file "rtest-gio-file-info")
+			     (:file "rtest-gio-cancellable")
+			     (:file "rtest-gio-async-result")
+			     (:file "rtest-gio-task")
+			     (:file "rtest-glib-check-memory")
+			     (:file "rtest-glib-finish")))))
+
+#+nil
+(mk:oos :cl-cffi-glib/test :load :compile-during-load t)
+
+#+nil
+(fiveam:run! 'glib-test::glib-test)
+
+
+(mk:defsystem :cl-cffi-glib-init
+  :source-pathname *cl-cffi-glib-source-dir*
+  :binary-pathname *cl-cffi-glib-binary-dir*
+  :source-extension "lisp"
+  :depends-on (:cffi
+	       :iterate
+	       :trivial-features)
+  :components ((:file "cl-cffi-glib-init")
+	       (:file "cl-cffi-glib-sys")))
+
+#+nil
+(mk:oos :cl-cffi-glib-init :load :compile-during-load t)
+
+(mk:defsystem :cl-cffi-glib
+  :source-pathname *cl-cffi-glib-source-dir*
+  :binary-pathname *cl-cffi-glib-binary-dir*
+  :source-extension "lisp"
+  :depends-on (:iterate
+	       :cl-cffi-glib-init ;; defsystem-depends-on
+	       :bordeaux-threads
+	       :closer-mop
+	       :trivial-garbage)
+  :components ((:module glib
+		:components (:SERIAL
+			     (:file "glib.package")
+			     (:file "glib.cl-utils")
+			     (:file "glib.stable-pointer")
+			     (:file "glib.gtype")
+			     (:file "glib.boxed-type")
+			     (:file "glib.version")
+			     (:file "glib.misc")
+			     (:file "glib.error")
+			     (:file "glib.main-loop")
+			     (:file "glib.bytes")
+			     (:file "glib.option")
+			     (:file "glib.key-file")
+			     (:file "glib.variant-type")
+			     (:file "glib.variant")))
+	       (:module gobject
+		:components (:SERIAL
+			     (:file "gobject.package")
+			     (:file "gobject.init")
+			     (:file "gobject.object-function")
+			     (:file "gobject.generating")
+			     (:file "gobject.type-info")
+			     (:file "gobject.gvalue")
+			     (:file "gobject.enumeration")
+			     (:file "gobject.boxed-lisp")
+			     (:file "gobject.boxed")
+			     (:file "gobject.param-spec")
+			     (:file "gobject.param")
+			     (:file "gobject.gobject-class")
+			     (:file "gobject.base")
+			     (:file "gobject.signals")
+			     (:file "gobject.binding")
+			     (:file "gobject.utils")
+			     (:file "gobject.foreign-gobject-subclassing")))
+	       (:module gio
+		:components (:SERIAL
+			     (:file "gio.package")
+			     (:file "gio.content-type")
+			     (:file "gio.app-info")
+			     (:file "gio.icon")
+			     (:file "gio.loadable-icon")
+			     (:file "gio.file-icon")
+			     (:file "gio.themed-icon")
+			     (:file "gio.emblemed-icon")
+			     (:file "gio.emblem")
+			     (:file "gio.settings")
+			     (:file "gio.resource")
+			     (:file "gio.permission")
+			     (:file "gio.simple-permission")
+			     (:file "gio.list-model")
+			     (:file "gio.list-store")
+			     (:file "gio.action")
+			     (:file "gio.action-group")
+			     (:file "gio.action-map")
+			     (:file "gio.simple-action")
+			     (:file "gio.property-action")
+			     (:file "gio.simple-action-group")
+			     (:file "gio.application")
+			     (:file "gio.application-command-line")
+			     (:file "gio.menu-model")
+			     (:file "gio.menu")
+			     (:file "gio.notification")
+			     (:file "gio.file")
+			     (:file "gio.file-info")
+			     (:file "gio.cancellable")
+			     (:file "gio.async-result")
+			     (:file "gio.task")))
+	       (:file "glib-user.package")))
+
+#+nil
+(mk:oos :cl-cffi-glib :load :compile-during-load t)
+
+(mk:defsystem :gio-example
+  :source-pathname *cl-cffi-glib-source-dir*
+  :binary-pathname *cl-cffi-glib-binary-dir*
+  :source-extension "lisp"
+  :depends-on (:cl-cffi-glib)
+  :components ((:module "example"
+		:components ((:file "gio-example")
+			     (:file "application-action")
+			     (:file "application-cmdline")
+			     (:file "application-open")))))
+
+#+nil
+(mk:oos :gio-example :load :compile-during-load t)
+
