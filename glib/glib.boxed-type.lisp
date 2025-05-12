@@ -267,7 +267,8 @@
   (let ((native-copy (gensym "NATIVE-COPY-"))
         (instance (gensym "INSTANCE-"))
         (info (gensym "INFO-")))
-    `(progn
+    `(eval-when (:compile-toplevel :execute :load-toplevel)
+    (progn
        (defclass ,name (boxed-opaque) ())
        (defmethod initialize-instance :after
                   ((,instance ,name) &key &allow-other-keys)
@@ -293,7 +294,7 @@
        ,@(when export
            (list `(export ',name
                           (find-package
-                              ,(package-name (symbol-package name)))))))))
+                              ,(package-name (symbol-package name))))))))))
 
 ;;; ----------------------------------------------------------------------------
 ;;;
