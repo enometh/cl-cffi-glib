@@ -30,7 +30,8 @@
 ;; objects to foreign code. thing is any object. The return value is an integer.
 (let ((stable-pointers (make-array 0 :adjustable t :fill-pointer t))
       (stable-pointers-length 0)
-      (stable-pointers-counter 0))
+      (stable-pointers-counter 0)
+      (sp-mutex (bordeaux-threads:make-lock "stable-pointers lock")))
 
   (defun allocate-stable-pointer (thing)
     (flet ((find-fresh-id ()
@@ -40,10 +41,11 @@
                  (progn
                    (vector-push-extend nil stable-pointers)
                    (1- (incf stable-pointers-length))))))
-      (let ((id (find-fresh-id)))
-        (incf stable-pointers-counter)
+      (bordeaux-threads:with-lock-held (sp-mutex)
+	(let ((id (find-fresh-id)))
+	  (incf stable-pointers-counter)
         (setf (aref stable-pointers id) thing)
-        (cffi:make-pointer id))))
+        (cffi:make-pointer id)))))
 
   ;; This is a workaround: We store a NULL-POINTER for the 0-index of the array.
   ;; This way we do not use the NULL-POINTER to address the 0-indexed slot of
@@ -53,8 +55,9 @@
 
   ;; Frees the stable pointer previously allocated by allocate-stable-pointer
   (defun free-stable-pointer (stable-pointer)
-    (decf stable-pointers-counter)
-    (setf (aref stable-pointers (cffi:pointer-address stable-pointer)) nil))
+    (bordeaux-threads:with-lock-held (sp-mutex)
+      (decf stable-pointers-counter)
+      (setf (aref stable-pointers (cffi:pointer-address stable-pointer)) nil)))
 
   ;; Returns the objects that is referenced by stable pointer previously
   ;; allocated by allocate-stable-pointer. May be called any number of times.
