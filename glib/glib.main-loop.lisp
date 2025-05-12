@@ -1821,7 +1821,8 @@ if (g_atomic_int_dec_and_test (&tasks_remaining))
 
 (cffi:defcallback source-func :boolean
     ((data :pointer))
-  (funcall (get-stable-pointer-value data)))
+ (with-simple-restart (skip-execution-of-source-func "SKIP Execution of thunk of G-SOURCE-FUNCTION")
+    (funcall (get-stable-pointer-value data))))
 
 #+liber-documentation
 (setf (liber:alias-for-symbol 'source-func)
